@@ -1,0 +1,14 @@
+{
+    "manifest_version": 3,
+    "name": "Smart Bookmark Organizer",
+    "version": "1.0",
+    "description": "Automatically categorize your bookmarks.",
+    "permissions": ["bookmarks", "storage"],
+    "background": {
+      "service_worker": "background.js"
+    },
+    "action": {
+      "default_popup": "popup.html"
+    }
+  }
+  
