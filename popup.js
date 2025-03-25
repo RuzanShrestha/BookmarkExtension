@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 link.target = "_blank";
 
                 let deleteBtn = document.createElement("button");
-                deleteBtn.innerText = "X";
+                deleteBtn.innerText = "x";
                 deleteBtn.classList.add("delete-btn");
 
                 deleteBtn.onclick = () => {
