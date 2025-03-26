@@ -55,11 +55,20 @@ a {
 .delete-btn {
   background: none;
   border: none;
-  color: #ff3b30;
-  font-weight: bold;
+  color: #8e8e93;
+  font-weight: normal; /* changed from bold */
   cursor: pointer;
-  font-size: 16px;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0;
+  transition: color 0.2s ease;
 }
+
+.delete-btn:hover {
+  color: #ffffff;
+}
+
+
 
 #resetBtn {
   margin-top: 14px;

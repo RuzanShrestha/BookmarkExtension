@@ -1,47 +1,38 @@
-// Define getCategory BEFORE any logic uses it
-function getCategory(bookmark) {
-    const categories = {
-        "Work": ["docs", "slack", "notion", "jira", "trello"],
-        "News": ["news", "bbc", "cnn", "nytimes", "guardian"],
-        "Shopping": ["amazon", "ebay", "shopify", "bestbuy"],
-        "Social Media": ["facebook", "twitter", "instagram", "linkedin"],
-        "Entertainment": ["youtube", "netflix", "spotify", "twitch"],
-        "Education": ["wikipedia", "khanacademy", "coursera", "udemy"]
-    };
+// AI-powered getCategory function
+async function getCategory(bookmark) {
+    try {
+        const response = await fetch("http://localhost:3000/categorize", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                title: bookmark.title,
+                url: bookmark.url
+            })
+        });
 
-    const url = bookmark.url?.toLowerCase() || "";
-    const title = bookmark.title?.toLowerCase() || "";
-
-    let category = "Uncategorized";
-    let maxMatches = 0;
-
-    for (let cat in categories) {
-        let matches = categories[cat].filter(keyword =>
-            url.includes(keyword) || title.includes(keyword)
-        ).length;
-
-        if (matches > maxMatches) {
-            maxMatches = matches;
-            category = cat;
-        }
+        const data = await response.json();
+        return data.category || "Uncategorized";
+    } catch (err) {
+        console.error("AI categorization failed, using fallback:", err);
+        return "Uncategorized";
     }
-
-    return category;
 }
 
 // When a bookmark is created in Chrome
-chrome.bookmarks.onCreated.addListener((id, bookmark) => {
-    categorizeBookmark(bookmark);
+chrome.bookmarks.onCreated.addListener(async (id, bookmark) => {
+    await categorizeBookmark(bookmark);
 });
 
 // Handle messages from popup.js
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "recategorize_bulk" && message.bookmarks) {
-        chrome.storage.local.get({ categorizedBookmarks: {} }, (data) => {
+        chrome.storage.local.get({ categorizedBookmarks: {} }, async (data) => {
             let categorizedBookmarks = data.categorizedBookmarks;
 
-            message.bookmarks.forEach(bookmark => {
-                const category = getCategory(bookmark);
+            for (const bookmark of message.bookmarks) {
+                const category = await getCategory(bookmark);
                 if (!categorizedBookmarks[category]) {
                     categorizedBookmarks[category] = [];
                 }
@@ -53,7 +44,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                         url: bookmark.url
                     });
                 }
-            });
+            }
 
             chrome.storage.local.set({ categorizedBookmarks }, () => {
                 console.log("All bookmarks saved via bulk recategorization.");
@@ -61,7 +52,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             });
         });
 
-        return true; // Keep message channel open
+        return true; // Keep message channel open for async response
     }
 
     if (message.action === "recategorize" && message.bookmark) {
@@ -69,11 +60,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 });
 
-// Single-bookmark categorization function
-function categorizeBookmark(bookmark) {
-    chrome.storage.local.get({ categorizedBookmarks: {} }, (data) => {
+// Categorize a single bookmark and store it
+async function categorizeBookmark(bookmark) {
+    chrome.storage.local.get({ categorizedBookmarks: {} }, async (data) => {
         let categorizedBookmarks = data.categorizedBookmarks;
-        const category = getCategory(bookmark);
+        const category = await getCategory(bookmark);
 
         if (!categorizedBookmarks[category]) {
             categorizedBookmarks[category] = [];
